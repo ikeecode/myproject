@@ -49,6 +49,8 @@ def chargementUser():
 
     if genForm.validate_on_submit():
         number = genForm.numberChosen.data
+        if number < 0:
+            flash('Evitez de mettre un nombre negatif')
         userDataNumber = User.query.order_by(User.id).count()
         print(userDataNumber, '='*20)
         if number > userDataNumber:
@@ -122,7 +124,7 @@ def logOut():
     flash('You have been logged out !')
     return redirect(url_for('logIn'))
 
-@app.route('/menu/menuItem/infos user/carte')
+@app.route('/menu/menuItem/infosuser/carte')
 @login_required
 def folium_map():
     user_address = Address.query.get(current_user.id)
