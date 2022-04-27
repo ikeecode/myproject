@@ -15,13 +15,56 @@ class FromApi:
     # online work
     @classmethod
     def api_to_json(cls, url):
-        return requests.get(cls.api_url + url).json()
+        try:
+            response = requests.get(cls.api_url + url).json()
+            return response
+        except:
+            print('Verifiez la connexion')
+
 
     # # offline work
     # @classmethod
     # def api_to_json(cls, url):
     #     with open(f"../{url}.json", 'r') as file:
     #         return load(file)
+
+
+    @classmethod
+    def prepare_photos(cls, album_id):
+        endpoint = f'albums/{album_id}/photos'
+        photos   = cls.api_to_json(endpoint)
+        for photo in photos:
+            photo_instance    = Photo(
+                albumId       = photo.get('albumId'),
+                title         = photo.get('title'),
+                url           = photo.get('url'),
+                thumbnail_url = photo.get('thumbnailUrl')
+            )
+
+            db.session.add(photo_instance)
+
+
+    @classmethod
+    def prepare_albums(cls, user_id):
+        endpoint = f'users/{user_id}/albums'
+        albums = cls.api_to_json(endpoint)
+        for album in albums:
+            album_instance = Album(
+                userId = album.get('userId'),
+                idApi  = album.get('id'),
+                title  = album.get('title')
+            )
+            # print(album_instance)
+            db.session.add(album_instance)
+            album_id = album.get('id')
+            cls.prepare_photos(album_id)
+
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+
+
 
     @classmethod
     def prepare_todos(cls, user_id):
@@ -53,13 +96,8 @@ class FromApi:
                     email    = comment.get('email'),
                     body     = comment.get('body')
             )
-            print(comment_instance)
+            # print(comment_instance)
             db.session.add(comment_instance)
-        # try:
-        #     db.session.commit()
-        # except:
-        #     db.session.rollback()
-
 
 
     @classmethod
@@ -76,8 +114,8 @@ class FromApi:
             )
             db.session.add(post_instance)
             post_id = post.get('id')
-            print(post_id)
-            print('chargement des commentaires du posts ' + str(post_id))
+            # print(post_id)
+            # print('chargement des commentaires du posts ' + str(post_id))
             cls.prepare_comments(post_id)
 
         try:
@@ -155,7 +193,7 @@ class FromApi:
                 companyId = Company.query.filter_by(name=company.get('name')).first().id
 
                 ## create user object
-                user_instance = User(
+                user_instance     = User(
                         name      = user.get('name'),
                         idApi     = user.get('id'),
                         fromApi   = True,
@@ -183,6 +221,7 @@ class FromApi:
 
 
 
-FromApi.prepare_users(number=1)
-FromApi.prepare_posts(user_id=1)
-FromApi.prepare_todos(user_id=1)
+# FromApi.prepare_users(number=1)
+# FromApi.prepare_posts(user_id=1)
+# FromApi.prepare_todos(user_id=1)
+# FromApi.prepare_albums(1)
